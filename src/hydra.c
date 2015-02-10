@@ -4,12 +4,25 @@
 
 #include "hydra.h"
 
+typedef enum {
+    HYDRA_NOT_STARTED = 0,
+    HYDRA_STARTED,
+    HYDRA_RUNNING,
+    HYDRA_STOPPING,
+    HYDRA_STOPPED,
+    HYDRA_REMOVED
+    }hydra_state;
+
 static live_thread_count = 0;
 
-struct hydra_thread_{
+typedef struct hydra_thread_{
     uint8_t id;
     pthread_t thread_id;
     } hydra_threads;
+
+struct hydra_task_{
+    
+    } hydra_task_t;
 
 struct hydra
 
