@@ -1,6 +1,8 @@
 #ifndef HYDRA_H
 #define HYDRA_H
 
+#include "types.h"
+
 #define MAX_WORKER_COUNT 10
 
 typedef void *(*hydra_routine) (void *);
@@ -17,5 +19,7 @@ typedef enum {
     HYDRA_MAX_THREAD,   /* Max number of worker thread reached */
     HYDRA_OOM           /* Out Of Memory */
     }HYDRA_RET;
+
+HYDRA_RET hydra_init(uint8_t );
 
 #endif
