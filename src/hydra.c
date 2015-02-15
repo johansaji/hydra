@@ -35,9 +35,15 @@ typedef struct hydra_tasks{
 /*
  * Contextual information for master and reaper thread
  */
+
+struct shutdown_controller{
+    uint8_t shutdown_service;
+    uint8_t shutdown_reaper;
+};
+
 typedef struct hydra_controller_thread{
     pthread_t service_thread, reaper_thread;
-    uint8_t shutdown;
+    struct shutdown_controller shutdown;
     hydra_tasks_t *high_priority, *medium_priority, *low_priority;
     uint8_t live_thread_count;
     pthread_mutex_t lock;
@@ -52,18 +58,21 @@ typedef struct hydra_worker_thread{
 } hydra_worker_thread_t;
 
 
-static void *hydra_service_thread(void *data){
-    while (1){
-      printf("hydra_service_thread\n");
-      sleep (10);
+static void *hydra_service_thread(void *flag){
+    struct shutdown_controller *shutdown = (struct shutdown_controller *)flag;
+    while (0 == shutdown->shutdown_service){
+      //TODO: Service functionality implementation
     }
+    shutdown->shutdown_reaper = 1;
+    printf("hydra_service_thread shutdown\n");
+
     return NULL;
 }
 
-static void *hydra_reaper_thread(void *data){
-    while (1){
-      printf("hydra_reaper_thread\n");
-      sleep (10);
+static void *hydra_reaper_thread(void *flag){
+    struct shutdown_controller *shutdown = (struct shutdown_controller *)flag;
+    while (0 == shutdown->shutdown_reaper){
+      //TODO: Reaper functionality implementation
     }
     return NULL;
 }
@@ -83,23 +92,20 @@ static HYDRA_RET create_controll_threads(hydra_controller_thread_t *context){
     }
 
     //Creating reaper thread
-    printf("reaper\n");
-    ret = pthread_create(&(context->reaper_thread), NULL, hydra_reaper_thread, NULL);
+    ret = pthread_create(&(context->reaper_thread), NULL, hydra_reaper_thread, &(context->shutdown));
     if (0 != ret){
       //TODO:Log here
       goto controll_thred_failed;
     }
-    printf("reaper\n");
 
     //Creating service thread
-    printf("service\n");
-    ret = pthread_create(&(context->service_thread), NULL, hydra_service_thread, NULL);
+    ret = pthread_create(&(context->service_thread), NULL, hydra_service_thread, &(context->shutdown));
     if (0 != ret){
-      context->shutdown = 1;
+      context->shutdown.shutdown_service = 1;
+      context->shutdown.shutdown_reaper = 0;
       //TODO:Log here
       goto controll_thred_failed;
     }
-    printf("service\n");
 
     return HYDRA_SUCCESS;
 
@@ -109,7 +115,6 @@ cond_failed:
     pthread_mutex_destroy(&(context->lock));
 lock_failed:
     return HYDRA_FAILED; 
-    
 }
 
 static hydra_controller_thread_t *context = NULL;
@@ -137,12 +142,15 @@ HYDRA_RET hydra_init(uint8_t worker_count){
     }
     memset(context, 0, sizeof(hydra_controller_thread_t));
     
-    context->shutdown = 0;
+    context->shutdown.shutdown_service = 0;
     ret = create_controll_threads(context);
     if (ret != HYDRA_SUCCESS){
         //TODO:Log here
         return ret;
     }
-
     return HYDRA_SUCCESS;
+}
+
+HYDRA_RET hydra_destroy(){
+    //TODO: stop service and reaper thread
 }
